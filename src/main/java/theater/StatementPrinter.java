@@ -28,57 +28,66 @@ public class StatementPrinter {
             {"checkstyle:FinalLocalVariable", "checkstyle:SuppressWarnings",
                     "checkstyle:MagicNumber", "checkstyle:NeedBraces", "checkstyle:Indentation"})
     public String statement() {
-        int totalAmount = 0;
-        int volumeCredits = 0;
         StringBuilder result = new StringBuilder("Statement for "
                 + invoice.getCustomer() + System.lineSeparator());
 
-        for (Performance p : invoice.getPerformances()) {
-
-            int thisAmount = getThisAmount(p);
-
-            // add volume credits
-            volumeCredits = getVolumeCredits(p, volumeCredits);
-
-            // print line for this order
+        // Loop 3: build lines for each performance
+        for (Performance performance : invoice.getPerformances()) {
             result.append(String.format("  %s: %s (%s seats)%n",
-                    getPlay(p).name,
-                    usd(thisAmount),
-                    p.audience));
-
-            totalAmount += thisAmount;
+                    getPlay(performance).name,
+                    usd(getThisAmount(performance)),
+                    performance.audience));
         }
 
-        // ✅ Step 15: 这里改成用 usd(totalAmount)
+        // Use helper methods to get totals
         result.append(String.format("Amount owed is %s%n",
-                usd(totalAmount)));
-
+                usd(getTotalAmount())));
         result.append(String.format("You earned %s credits%n",
-                volumeCredits));
+                getTotalVolumeCredits()));
 
         return result.toString();
     }
 
     @SuppressWarnings({"checkstyle:MagicNumber", "checkstyle:SuppressWarnings"})
-    private static String usd(int thisAmount) {
-        return NumberFormat.getCurrencyInstance(Locale.US).format(thisAmount / 100);
+    private static String usd(int amount) {
+        return NumberFormat.getCurrencyInstance(Locale.US).format(amount / 100);
     }
 
-    @SuppressWarnings({"checkstyle:ParameterAssignment", "checkstyle:SuppressWarnings", "checkstyle:ParameterName"})
-    private int getVolumeCredits(Performance p, int volumeCredits) {
-        volumeCredits += Math.max(
-                p.audience - Constants.BASE_VOLUME_CREDIT_THRESHOLD, 0);
+    @SuppressWarnings({"checkstyle:SuppressWarnings"})
+    private int getTotalAmount() {
+        int totalAmount = 0;
+        for (Performance performance : invoice.getPerformances()) {
+            totalAmount += getThisAmount(performance);
+        }
+        return totalAmount;
+    }
 
-        // add extra credit for every five comedy attendees
-        if ("comedy".equals(getPlay(p).type)) {
-            volumeCredits += p.audience / Constants.COMEDY_EXTRA_VOLUME_FACTOR;
+    @SuppressWarnings({"checkstyle:SuppressWarnings"})
+    private int getTotalVolumeCredits() {
+        int volumeCredits = 0;
+        for (Performance performance : invoice.getPerformances()) {
+            volumeCredits += getVolumeCredits(performance);
         }
         return volumeCredits;
     }
 
-    @SuppressWarnings({"checkstyle:ParameterName", "checkstyle:SuppressWarnings"})
-    private Play getPlay(Performance p) {
-        return plays.get(p.playID);
+    @SuppressWarnings({"checkstyle:MagicNumber", "checkstyle:SuppressWarnings"})
+    private int getVolumeCredits(Performance performance) {
+        int result = 0;
+
+        result += Math.max(
+                performance.audience - Constants.BASE_VOLUME_CREDIT_THRESHOLD, 0);
+
+        // add extra credit for every five comedy attendees
+        if ("comedy".equals(getPlay(performance).type)) {
+            result += performance.audience / Constants.COMEDY_EXTRA_VOLUME_FACTOR;
+        }
+        return result;
+    }
+
+    @SuppressWarnings({"checkstyle:SuppressWarnings"})
+    private Play getPlay(Performance performance) {
+        return plays.get(performance.playID);
     }
 
     @SuppressWarnings({"checkstyle:MagicNumber", "checkstyle:SuppressWarnings"})
@@ -98,14 +107,16 @@ public class StatementPrinter {
                 if (performance.audience > Constants.COMEDY_AUDIENCE_THRESHOLD) {
                     result += Constants.COMEDY_OVER_BASE_CAPACITY_AMOUNT
                             + (Constants.COMEDY_OVER_BASE_CAPACITY_PER_PERSON
-                            * (performance.audience - Constants.COMEDY_AUDIENCE_THRESHOLD));
+                            * (performance.audience
+                            - Constants.COMEDY_AUDIENCE_THRESHOLD));
                 }
                 result += Constants.COMEDY_AMOUNT_PER_AUDIENCE * performance.audience;
                 break;
 
             default:
                 throw new UnknownPlayTypeException(
-                        String.format("unknown type: %s", getPlay(performance).type));
+                        String.format("unknown type: %s",
+                                getPlay(performance).type));
         }
 
         return result;
