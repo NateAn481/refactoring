@@ -40,13 +40,7 @@ public class StatementPrinter {
             int thisAmount = getThisAmount(p);
 
             // add volume credits
-            volumeCredits += Math.max(
-                    p.audience - Constants.BASE_VOLUME_CREDIT_THRESHOLD, 0);
-
-            // add extra credit for every five comedy attendees
-            if ("comedy".equals(getPlay(p).type)) {
-                volumeCredits += p.audience / Constants.COMEDY_EXTRA_VOLUME_FACTOR;
-            }
+            volumeCredits = getVolumeCredits(p, volumeCredits);
 
             // print line for this order
             result.append(String.format("  %s: %s (%s seats)%n",
@@ -63,6 +57,18 @@ public class StatementPrinter {
                 volumeCredits));
 
         return result.toString();
+    }
+
+    @SuppressWarnings({"checkstyle:ParameterAssignment", "checkstyle:SuppressWarnings", "checkstyle:ParameterName"})
+    private int getVolumeCredits(Performance p, int volumeCredits) {
+        volumeCredits += Math.max(
+                p.audience - Constants.BASE_VOLUME_CREDIT_THRESHOLD, 0);
+
+        // add extra credit for every five comedy attendees
+        if ("comedy".equals(getPlay(p).type)) {
+            volumeCredits += p.audience / Constants.COMEDY_EXTRA_VOLUME_FACTOR;
+        }
+        return volumeCredits;
     }
 
     @SuppressWarnings({"checkstyle:ParameterName", "checkstyle:SuppressWarnings"})
