@@ -10,6 +10,7 @@ public final class Constants {
     public static final int COMEDY_EXTRA_VOLUME_FACTOR = 5;
     // comedy amount constants
     public static final int COMEDY_AMOUNT_PER_AUDIENCE = 300;
+    @SuppressWarnings({"checkstyle:ModifierOrder", "checkstyle:SuppressWarnings"})
     public final static int COMEDY_AUDIENCE_THRESHOLD = 20;
     public static final int COMEDY_BASE_AMOUNT = 30000;
     public static final int COMEDY_OVER_BASE_CAPACITY_AMOUNT = 10000;
