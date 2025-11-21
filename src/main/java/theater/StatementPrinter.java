@@ -33,8 +33,6 @@ public class StatementPrinter {
         StringBuilder result = new StringBuilder("Statement for "
                 + invoice.getCustomer() + System.lineSeparator());
 
-        NumberFormat format = NumberFormat.getCurrencyInstance(Locale.US);
-
         for (Performance p : invoice.getPerformances()) {
 
             int thisAmount = getThisAmount(p);
@@ -45,18 +43,25 @@ public class StatementPrinter {
             // print line for this order
             result.append(String.format("  %s: %s (%s seats)%n",
                     getPlay(p).name,
-                    format.format(thisAmount / 100),
+                    usd(thisAmount),
                     p.audience));
 
             totalAmount += thisAmount;
         }
 
+        // ✅ Step 15: 这里改成用 usd(totalAmount)
         result.append(String.format("Amount owed is %s%n",
-                format.format(totalAmount / 100)));
+                usd(totalAmount)));
+
         result.append(String.format("You earned %s credits%n",
                 volumeCredits));
 
         return result.toString();
+    }
+
+    @SuppressWarnings({"checkstyle:MagicNumber", "checkstyle:SuppressWarnings"})
+    private static String usd(int thisAmount) {
+        return NumberFormat.getCurrencyInstance(Locale.US).format(thisAmount / 100);
     }
 
     @SuppressWarnings({"checkstyle:ParameterAssignment", "checkstyle:SuppressWarnings", "checkstyle:ParameterName"})
