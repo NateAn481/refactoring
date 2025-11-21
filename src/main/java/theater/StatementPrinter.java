@@ -36,45 +36,21 @@ public class StatementPrinter {
         NumberFormat format = NumberFormat.getCurrencyInstance(Locale.US);
 
         for (Performance p : invoice.getPerformances()) {
-            Play play = plays.get(p.playID);
 
-            int thisAmount;
-
-            switch (play.type) {
-                case "tragedy":
-                    thisAmount = 40000;
-                    if (p.audience > Constants.TRAGEDY_AUDIENCE_THRESHOLD) {
-                        thisAmount += 1000 * (p.audience - 30);
-                    }
-                    break;
-
-                case "comedy":
-                    thisAmount = Constants.COMEDY_BASE_AMOUNT;
-                    if (p.audience > Constants.COMEDY_AUDIENCE_THRESHOLD) {
-                        thisAmount += Constants.COMEDY_OVER_BASE_CAPACITY_AMOUNT
-                                + (Constants.COMEDY_OVER_BASE_CAPACITY_PER_PERSON
-                                * (p.audience - Constants.COMEDY_AUDIENCE_THRESHOLD));
-                    }
-                    thisAmount += Constants.COMEDY_AMOUNT_PER_AUDIENCE * p.audience;
-                    break;
-
-                default:
-                    throw new UnknownPlayTypeException(
-                            String.format("unknown type: %s", play.type));
-            }
+            int thisAmount = getThisAmount(p);
 
             // add volume credits
             volumeCredits += Math.max(
                     p.audience - Constants.BASE_VOLUME_CREDIT_THRESHOLD, 0);
 
             // add extra credit for every five comedy attendees
-            if ("comedy".equals(play.type)) {
+            if ("comedy".equals(getPlay(p).type)) {
                 volumeCredits += p.audience / Constants.COMEDY_EXTRA_VOLUME_FACTOR;
             }
 
             // print line for this order
             result.append(String.format("  %s: %s (%s seats)%n",
-                    play.name,
+                    getPlay(p).name,
                     format.format(thisAmount / 100),
                     p.audience));
 
@@ -87,5 +63,40 @@ public class StatementPrinter {
                 volumeCredits));
 
         return result.toString();
+    }
+
+    @SuppressWarnings({"checkstyle:ParameterName", "checkstyle:SuppressWarnings"})
+    private Play getPlay(Performance p) {
+        return plays.get(p.playID);
+    }
+
+    @SuppressWarnings({"checkstyle:MagicNumber", "checkstyle:SuppressWarnings"})
+    private int getThisAmount(Performance performance) {
+        int result;
+
+        switch (getPlay(performance).type) {
+            case "tragedy":
+                result = 40000;
+                if (performance.audience > Constants.TRAGEDY_AUDIENCE_THRESHOLD) {
+                    result += 1000 * (performance.audience - 30);
+                }
+                break;
+
+            case "comedy":
+                result = Constants.COMEDY_BASE_AMOUNT;
+                if (performance.audience > Constants.COMEDY_AUDIENCE_THRESHOLD) {
+                    result += Constants.COMEDY_OVER_BASE_CAPACITY_AMOUNT
+                            + (Constants.COMEDY_OVER_BASE_CAPACITY_PER_PERSON
+                            * (performance.audience - Constants.COMEDY_AUDIENCE_THRESHOLD));
+                }
+                result += Constants.COMEDY_AMOUNT_PER_AUDIENCE * performance.audience;
+                break;
+
+            default:
+                throw new UnknownPlayTypeException(
+                        String.format("unknown type: %s", getPlay(performance).type));
+        }
+
+        return result;
     }
 }
